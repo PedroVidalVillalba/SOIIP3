@@ -12,6 +12,7 @@
 #ifndef PRODUCER_CONSUMER
 #define PRODUCER_CONSUMER
 
+#define _GNU_SOURCE         /* Para poder utilizar gettid() para identificar al hilo */
 #include "shared_stack.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,19 +20,13 @@
 #include <sys/types.h>
 
 /* Definir constantes y macros para la impresión */
-#define PRODUCER_COLOR_1  "\x1b[36m"
-#define CONSUMER_COLOR_1  "\x1b[31m"
-#define PRODUCER_COLOR_2  "\x1b[32m"
-#define CONSUMER_COLOR_2  "\x1b[33m"
+#define PRODUCER_COLOR  "\x1b[36m"
+#define CONSUMER_COLOR  "\x1b[31m"
 #define NO_COLOR        "\x1b[0m"
 #define bold(text) "\x1b[1m" text "\x1b[22m"
 
-/* Variables globales con los formatos de color para productor y consumidor */
-extern char* producer_color;
-extern char* consumer_color;
-
-#define producer_printf(format, ...) ( printf("%s [%d] " format NO_COLOR, producer_color, getpid(), ##__VA_ARGS__) )
-#define consumer_printf(format, ...) ( printf("%s [%d] " format NO_COLOR, consumer_color, getpid(), ##__VA_ARGS__) )
+#define producer_printf(format, ...) ( printf(PRODUCER_COLOR "[%d] " format NO_COLOR, gettid(), ##__VA_ARGS__) )
+#define consumer_printf(format, ...) ( printf(CONSUMER_COLOR "[%d] " format NO_COLOR, gettid(), ##__VA_ARGS__) )
 
 /*** 
  * No se incluyen funciones de producer y consumer como tal, ya que estas podrían
