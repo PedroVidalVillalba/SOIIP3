@@ -44,6 +44,10 @@ $(OUT): $(OBJ) $(OBJS_COMMON)
 	$(CC) $(CFLAGS) -c -o $@ $< $(INCLUDES)
 
 
+# Condicional para añadir flags cuando se llama a 'make sleep'
+sleep: CFLAGS += -DSLEEP
+sleep: all
+
 # Borra todos los resultados de la compilación (prerrequisito: cleanobj)
 clean: cleanobj
 	rm -f $(OUT)

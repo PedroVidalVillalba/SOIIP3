@@ -10,10 +10,22 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <pthread.h>
 #include "array_sum.h"
 
 #define fail(message)  { perror(message); exit(EXIT_FAILURE); }
+
+#ifdef SLEEP
+extern struct {
+    int production;
+    int insertion;
+    int contribution_p;
+    int extraction;
+    int consumption;
+    int contribution_c;
+} sleep_times;
+#endif //SLEEP
 
 void create_array(Array* array, int* values, int size, int start, int step) {
     int i;
@@ -61,6 +73,13 @@ int contribute_sum(Array* array) {
         return (array->count >= array->size);
     }
     /* Mutex bloqueado con éxito; estamos dentro de la región crítica */
+#ifdef SLEEP
+    if (array->count % 2)
+        sleep(sleep_times.contribution_c);
+    else
+        sleep(sleep_times.contribution_p);
+#endif //SLEEP
+
     r = (random() % 3) + 2;
     for (i = 0; i < r && array->count < array->size; i++) {
         array->sum += array->values[array->count];

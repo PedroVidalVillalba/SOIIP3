@@ -11,12 +11,29 @@
 
 #include "producer_consumer.h"
 
+#ifdef SLEEP
+extern struct {
+    int production;
+    int insertion;
+    int contribution_p;
+    int extraction;
+    int consumption;
+    int contribution_c;
+} sleep_times;
+#endif //SLEEP
+
 int produce_item() {
+#ifdef SLEEP
+    sleep(sleep_times.production);
+#endif //SLEEP
     return ((int) random() % 11);
 }
 
 
 void insert_item(Stack* stack, int item) {
+#ifdef SLEEP
+    sleep(sleep_times.insertion);
+#endif //SLEEP
     /* Almacenar el número de items actualmente en el stack, según lo ve el proceso que inserta,
      * en el campo count del stack */
     stack->buffer[(stack->count)++] = item; /* Insertar el item y aumentar el contador */
@@ -45,6 +62,9 @@ void produce(Stack* stack){
 int remove_item(Stack* stack) {
     int item;
 
+#ifdef SLEEP
+    sleep(sleep_times.extraction);
+#endif //SLEEP
     /* Almacenar el número de items actualmente en el stack, según lo ve el proceso que elimina,
      * en el campo count del stack */
     item = stack->buffer[--(stack->count)];
@@ -55,6 +75,9 @@ int remove_item(Stack* stack) {
 
 
 void consume_item(Stack* stack, int item, int position, char* representation) {
+#ifdef SLEEP
+    sleep(sleep_times.consumption);
+#endif //SLEEP
     consumer_printf("Eliminado el item "bold("%2d")" de la posición "bold("%2d")". Buffer: %s\n", item, position, representation);
 }
 

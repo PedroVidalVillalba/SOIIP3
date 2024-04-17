@@ -55,7 +55,19 @@ void* producer(void* args);
  */
 void* consumer(void* args);
 
-
+#ifdef SLEEP
+#define usage(exe_name) fprintf(stderr, "ERROR: Número de parámetros incorrecto\n"  \
+                                        "Modo de ejecución: %s <production> <insertion> <contribution_p> <extraction> <consumption> <contribution_c>\n\n", exe_name)
+/* Variable global con los tiempos de cada sleep */
+struct {
+    int production;
+    int insertion;
+    int contribution_p;
+    int extraction;
+    int consumption;
+    int contribution_c;
+} sleep_times;
+#endif //SLEEP
 
 int main(int argc, char** argv) {
     pthread_t producers[P], consumers[C];
@@ -63,6 +75,23 @@ int main(int argc, char** argv) {
     Array producer_array, consumer_array;
     struct thread_args producer_args, consumer_args;
     int i;
+
+#ifdef SLEEP
+    /* Procesado de argumentos */
+    if (argc != 7) {
+        usage(argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    sleep_times = (typeof(sleep_times)) {
+            .production      = atoi(argv[1]),
+            .insertion       = atoi(argv[2]),
+            .contribution_p  = atoi(argv[3]),
+            .extraction      = atoi(argv[4]),
+            .consumption     = atoi(argv[5]),
+            .contribution_c  = atoi(argv[6]),
+    };
+#endif //SLEEP
 
     /* Inicializar las variables compartidas */
     create_stack(&stack, N);
@@ -148,26 +177,6 @@ void* consumer(void* args) {
         if (!(stack->production_finished) || stack->count) {    /* Hay que consumir hasta que los productores hayan acabado y el stack esté vacío */
             consume(stack);
         }
-        /* todo: Buscar una solución para eso con calma.
-         * NO es para nada trivial: mientras los productores no hayan acabado, los
-         * consumidores tendrían que trabajar con normalidad.
-         * Una vez los productores hayan terminado, hay que consumir las veces
-         * necesarias para vaciar el stack, incluyendo tanto a los consumidores que
-         * ya estaban esperando por el mutex, como posiblemente hacer que entren
-         * más consumidores hasta vaciarlo, sin que nadie se quede esperando
-         * dentro de la región crítica por una variable de condición y hacer que
-         * todos terminen */
-        /* Posibles soluciones:
-         *  @ Serializar esta parte, con otro mutex para controlar el acceso o
-         *    usando un mutex recursivo (bloqueamos el stack fuera y otra vez
-         *    dentro de consume()).
-         *  @ Usar pthread_cond_broadcast() para despertar a todos los hilos
-         *    que estuvieran ya esperando dentro de la región crítica.
-         *    Implicaría tener que comprobar si la cuenta del stack ya está a 0
-         *    después de despertar (se hace de todas formas en el while),
-         *    y salir si es el caso (siempre y cuando ya
-         *    hayan terminado todos los hilos).
-         */
         if (!done) {
             done = contribute_sum(array);
             if (done) {
