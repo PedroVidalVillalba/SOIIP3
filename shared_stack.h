@@ -3,8 +3,8 @@
  * Librería con las cabeceras de las funciones genéricas de
  * para crear, representar y destruir un stack compartido controlado
  *
- * @date 07/04/2024
- * @authors Falgueras Casarejos, Yago
+ * @date 09/04/2024
+ * @authors Arcos Salgado, Guillermo
  * @authors Vidal Villalba, Pedro
  */
 
@@ -23,26 +23,25 @@
 typedef struct {
     int* buffer;                    /* Buffer en memoria compartida donde guardar los datos */
     int size;                       /* Tamaño del buffer */
-    int count;                      /* Posición del último elemento que hay actualmente en el buffer, según lo ve cada proceso */
-    pthread_mutex_t mutex;          /* Mutex que regula el acceso al buffer */
-    pthread_cond_t cond_c;          /* Variable de condición para los consumidores */
-    pthread_cond_t cond_p;          /* Variable de condición para los productores */
+    int count;                      /* Posición del último hueco libre que hay actualmente en el buffer */
+    int production_finished;        /* Flag para indicar a los consumidores cuándo acabaron los productores */
+    pthread_mutex_t* mutex;         /* Mutex que regula el acceso al buffer */
+    pthread_cond_t* cond_c;         /* Variable de condición para los consumidores */
+    pthread_cond_t* cond_p;         /* Variable de condición para los productores */
 } Stack;
 
 /**
- * Crea un nuevo Stack en memoria compartida, de tamaño <u>size</u>,
- * y con sus correspondientes semáfóros identificados por el nombre
- * (e.g., "/mutex_<name>").
+ * Crea un nuevo Stack , de tamaño <u>size</u>,
+ * y con sus correspondientes mutex y variables de condición.
  *
  * @param stack Dirección en la que guardar el nuevo Stack.
  * @param size  Tamaño del buffer.
- * @param name  Nombre con el que identificar a los semáforos del nuevo Stack.
  */
-void create_stack(Stack* stack, int size, const char* name);
+void create_stack(Stack* stack, int size);
 
 /**
  * Elimina un Stack de memoria, liberando el buffer de memoria compartida,
- * su representación textual y cerrando y destruyendo sus semáforos asociados.
+ * cerrando y destruyendo sus mutex y variables de condición asociadas.
  *
  * @param stack Puntero al Stack a destruir.
  */
@@ -52,7 +51,9 @@ void delete_stack(Stack* stack);
  * Actualiza la representación textual del <u>stack</u>.
  *
  * @param stack Stack a actualizar.
+ * @param representation    Representación textual del stack para cada hilo.
+ *                          Debe estar ya alojada y tener espacio suficiente (3 * stack->size + 2).
  */
-void update_representation(Stack* stack);
+void update_representation(Stack* stack, char* representation);
 
 #endif //SHARED_STACK

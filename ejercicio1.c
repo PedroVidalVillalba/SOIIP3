@@ -7,6 +7,7 @@
  * @authors Vidal Villalba, Pedro
  */
 
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -55,7 +56,6 @@ void* producer(void* args);
 void* consumer(void* args);
 
 
-int producers_finished;     /* Flag global para indicar a los consumidores cuándo acabaron los productores */
 
 int main(int argc, char** argv) {
     pthread_t producers[P], consumers[C];
@@ -64,11 +64,14 @@ int main(int argc, char** argv) {
     struct thread_args producer_args, consumer_args;
     int i;
 
-    /* todo: Iniciar las variables compartidas */
+    /* Inicializar las variables compartidas */
+    create_stack(&stack, N);
     /* Crear los arrays con los valores a sumar para productores y consumidores */
+    /* En el array de productores se suman los pares (empieza en 0 y va de 2 en 2) */
     create_array(&producer_array, NULL, 110 * (P + C), 0, 2);
     /* Crear el array de consumidores con el mismo array que el de productores */
-    create_array(&consumer_array, producer_array->values, 110 * (P + C), 1, 2);
+    /* En el array de consumidores se suman los impares (empieza en 1 y va de 2 en 2) */
+    create_array(&consumer_array, producer_array.values, 110 * (P + C), 1, 2);
 
     /* Configurar las estructuras de entrada para cada hilo */
     producer_args.stack = &stack;
@@ -94,12 +97,12 @@ int main(int argc, char** argv) {
     for (i = 0; i < P; i++) {
         pthread_join(producers[i], NULL);
     }
-    producers_finished = 1;
+    stack.production_finished = 1;
+    pthread_cond_broadcast(stack.cond_c);   /* todo: revisar esto */
     for (i = 0; i < C; i++) {
         pthread_join(consumers[i], NULL);
     }
 
-    /* todo: destruir todas las variables */
     delete_stack(&stack);
 
     delete_array(&producer_array);
@@ -141,31 +144,30 @@ void* consumer(void* args) {
     Array* array = ((struct thread_args*) args)->array;
     
     done = 0;
-    while (!producers_finished || !done) {
-        if (!producers_finished) {
+    while (!(stack->production_finished) || stack->count || !done) {
+        if (!(stack->production_finished) || stack->count) {    /* Hay que consumir hasta que los productores hayan acabado y el stack esté vacío */
             consume(stack);
-        } else {    /* Si los productores ya acabaron de producir, hay que ir con cuidado */
-            /* todo: Buscar una solución para eso con calma. 
-             * NO es para nada trivial: mientras los productores no hayan acabado, los
-             * consumidores tendrían que trabajar con normalidad.
-             * Una vez los productores hayan terminado, hay que consumir las veces
-             * necesarias para vaciar el stack, incluyendo tanto a los consumidores que
-             * ya estaban esperando por el mutex, como posiblemente hacer que entren
-             * más consumidores hasta vaciarlo, sin que nadie se quede esperando
-             * dentro de la región crítica por una variable de condición y hacer que
-             * todos terminen */
-            /* Posibles soluciones: 
-             *  @ Serializar esta parte, con otro mutex para controlar el acceso o
-             *    usando un mutex recursivo (bloqueamos el stack fuera y otra vez 
-             *    dentro de consume()).
-             *  @ Usar pthread_cond_broadcast() para despertar a todos los hilos 
-             *    que estuvieran ya esperando dentro de la región crítica.
-             *    Implicaría tener que comprobar si la cuenta del stack ya está a 0
-             *    después de despertar (se hace de todas formas en el while),
-             *    y salir si es el caso (siempre y cuando ya 
-             *    hayan terminado todos los hilos).
-             */
         }
+        /* todo: Buscar una solución para eso con calma.
+         * NO es para nada trivial: mientras los productores no hayan acabado, los
+         * consumidores tendrían que trabajar con normalidad.
+         * Una vez los productores hayan terminado, hay que consumir las veces
+         * necesarias para vaciar el stack, incluyendo tanto a los consumidores que
+         * ya estaban esperando por el mutex, como posiblemente hacer que entren
+         * más consumidores hasta vaciarlo, sin que nadie se quede esperando
+         * dentro de la región crítica por una variable de condición y hacer que
+         * todos terminen */
+        /* Posibles soluciones:
+         *  @ Serializar esta parte, con otro mutex para controlar el acceso o
+         *    usando un mutex recursivo (bloqueamos el stack fuera y otra vez
+         *    dentro de consume()).
+         *  @ Usar pthread_cond_broadcast() para despertar a todos los hilos
+         *    que estuvieran ya esperando dentro de la región crítica.
+         *    Implicaría tener que comprobar si la cuenta del stack ya está a 0
+         *    después de despertar (se hace de todas formas en el while),
+         *    y salir si es el caso (siempre y cuando ya
+         *    hayan terminado todos los hilos).
+         */
         if (!done) {
             done = contribute_sum(array);
             if (done) {
@@ -173,5 +175,6 @@ void* consumer(void* args) {
             }
         }
     }
-    
+
+    pthread_exit(NULL);
 }

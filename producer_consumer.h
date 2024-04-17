@@ -51,25 +51,37 @@ int produce_item(void);
 void insert_item(Stack* stack, int item);
 
 /**
- * Retira el último elemento del <u>stack</u>. Acumula en <u>total</u>
- * la suma de todos los valores contenidos en ese momento en el buffer.
+ * Retira el último elemento del <u>stack</u>.
  *
  * @param stack Stack del que retirar el item.
- * @param total	Variable de salida para contener la suma de todos los elementos del buffer.
  *
  * @return	Entero retirado del stack.
  */
-int remove_item(Stack* stack, int* total);
+int remove_item(Stack* stack);
 
 /**
- * Muestra por pantalla el entero consumido <u>item</u>, así como el resultado
- * de la suma de los valores contenidos en el <u>stack</u> (<u>total</u>) y la 
- * representación del stack actualizado.
+ * Muestra por pantalla el entero consumido <u>item</u>, así como la
+ * representación del <u>stack</u> actualizado.
  *
  * @param stack Stack del que se leyó el valor.
  * @param item	Último valor leído del stack.
- * @param total	Suma de los valores contenidos en el stack.
+ * @param position  Posición de la que se consumió el item.
+ * @param representation    Representación textual del stack.
  */
-void consume_item(Stack* stack, int item, int total);
+void consume_item(Stack* stack, int item, int position, char* representation);
+
+/**
+ * Produce un item y lo introduce en el stack.
+ *
+ * @param stack Stack en el que introducir el item.
+ */
+void produce(Stack* stack);
+
+/**
+ * Consume un item del stack.
+ *
+ * @param stack Stack del que consumir el item.
+ */
+void consume(Stack* stack);
 
 #endif //PRODUCER_CONSUMER

@@ -22,7 +22,7 @@ typedef struct{
     int sum;                    /* Suma de elementos del array (hasta el momento) */
     int count;                  /* Posición del último elemento del array sumado */
     int step;                   /* Número de posiciones que avanzar en cada acceso */
-    pthread_mutex_t mutex;      /* Mutex que regula el acceso a la suma y la cuenta */
+    pthread_mutex_t* mutex;     /* Mutex que regula el acceso a la suma y la cuenta */
 } Array;
 
 
@@ -55,6 +55,6 @@ void delete_array(Array* array);
  *
  * @return  Si ya se han sumado todos los elementos del array, devuelve 1; en caso contrario, devuelve 0.
  */
-int contribute_array(Array* array);
+int contribute_sum(Array* array);
 
 #endif //ARRAY_SUM

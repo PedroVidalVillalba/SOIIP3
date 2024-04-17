@@ -2,6 +2,10 @@
 .idea
 CMake*
 
+# Objetos
+*.o
+
 # Ejecutables
 ejercicio[1-2]
+
 

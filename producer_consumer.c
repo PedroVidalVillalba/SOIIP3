@@ -4,14 +4,12 @@
  * productor y consumidor usando un stack compartido controlado
  * por semáforos.
  *
- * @date 07/04/2024
- * @authors Falgueiras Casarejos, Yago
+ * @date 16/04/2024
+ * @authors Arcos Salgado, Guillermo
  * @authors Vidal Villalba, Pedro
  */
 
 #include "producer_consumer.h"
-#include <semaphore.h>
-
 
 int produce_item() {
     return ((int) random() % 11);
@@ -24,28 +22,60 @@ void insert_item(Stack* stack, int item) {
     stack->buffer[(stack->count)++] = item; /* Insertar el item y aumentar el contador */
 }
 
+void produce(Stack* stack){
+    int local_count, item;
+    char* representation;
 
-int remove_item(Stack* stack, int* total) {
+    representation = (char *) calloc(3 * stack->size + 2, sizeof(char));
+    item = produce_item();
+    pthread_mutex_lock(stack->mutex);                                                   /* Entra a la región crítica */
+    while (stack->count == stack->size) pthread_cond_wait(stack->cond_p, stack->mutex); /* Se bloquea si no puede añadir más items */
+    insert_item(stack, item);                                                       /* Poner item en el stack */
+    update_representation(stack, representation);                                       /* Actualizar la representación del buffer */
+    local_count = stack->count;                                                         /* Guardar localmente el contador */
+    pthread_cond_signal(stack->cond_c);                                             /* Despertar algún consumidor */
+    pthread_mutex_unlock(stack->mutex);                                                  /* Sale de la región crítica */
+
+    /* Como ya aumentamos el contador, no tenemos que sumarle 1 para pasarlo a indexado en 1 */
+    producer_printf("Añadido el item   "bold("%2d")" a la posición  "bold("%2d")". Buffer: %s\n", item, local_count, representation);
+    free(representation);
+}
+
+
+int remove_item(Stack* stack) {
     int item;
-    int i;
 
     /* Almacenar el número de items actualmente en el stack, según lo ve el proceso que elimina,
      * en el campo count del stack */
-    sem_getvalue(stack->full, &(stack->count));
-    item = stack->buffer[stack->count];
+    item = stack->buffer[--(stack->count)];
     stack->buffer[stack->count] = 0; /* Eliminar el entero del buffer */
-    /* Acumular la suma de los elementos del stack en total */
-    *total = item;
-    for (i = stack->count - 1; i >= 0; i--) {
-        *total += stack->buffer[i];
-    }
-    update_representation(stack);
 
     return item;
 }
 
 
-void consume_item(Stack* stack, int item, int total) {
-    consumer_printf("Eliminado el item "bold("%2d")" de la posición "bold("%d")". Buffer (%s): %s. Suma total anterior: "bold("%2d")".\n",
-            item , stack->count + 1, stack->name, stack->representation, total);
+void consume_item(Stack* stack, int item, int position, char* representation) {
+    consumer_printf("Eliminado el item "bold("%2d")" de la posición "bold("%2d")". Buffer: %s\n", item, position, representation);
+}
+
+void consume(Stack* stack){
+    char* representation;
+    int local_count, item;
+
+    representation = (char *) calloc(3 * stack->size + 2, sizeof(char));
+    pthread_mutex_lock(stack->mutex);       /* Entrar en la región crítica */
+    while (!stack->count) {                 /* Comprobar si el buffer está vacío; si no lo está ejecutar consumir un item con normalidad */
+        if (stack->production_finished) {   /* Comprobar si han acabado los productores; si ya acabaron, salir */
+            pthread_mutex_unlock(stack->mutex);
+            return;
+        }
+        pthread_cond_wait(stack->cond_c, stack->mutex);     /* Si los productores aún no terminaron, esperar */
+    }
+    item = remove_item(stack);                      /* Eliminar elemento de la cola */
+    update_representation(stack, representation);   /* Actualizar la representación del buffer */
+    local_count = stack->count;                     /* Guardar localmente el contador */
+    pthread_cond_signal(stack->cond_p);         /* Despertar productores */
+    pthread_mutex_unlock(stack->mutex);             /* Salir de la región crítica */
+    consume_item(stack, item, local_count + 1, representation); /* Imprimir elemento */
+    free(representation);
 }
