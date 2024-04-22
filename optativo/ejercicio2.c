@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
         pthread_join(producers[i], NULL);
     }
     stack.production_finished = 1;
-    /* En vez de despertar (ya no hay variables de condición), despertar a los consumidores 
+    /* En vez de despertar (ya no hay variables de condición), desbloquear a los consumidores 
      * que esperaban porque el buffer estaba vacío (se despierta a uno y el resto se despiertan entre sí) */
     pthread_mutex_unlock(stack.empty);
     for (i = 0; i < C; i++) {
