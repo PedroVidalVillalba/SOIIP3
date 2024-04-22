@@ -2,7 +2,7 @@
  * Sistemas Operativos 2. Práctica 2.
  * Librería con las implementaciones de las funciones genéricas de
  * productor y consumidor usando un stack compartido controlado
- * por semáforos.
+ * por mutexes y variables de condición.
  *
  * @date 16/04/2024
  * @authors Arcos Salgado, Guillermo
@@ -47,11 +47,11 @@ void produce(Stack* stack){
     item = produce_item();
     pthread_mutex_lock(stack->mutex);                                                   /* Entra a la región crítica */
     while (stack->count == stack->size) pthread_cond_wait(stack->cond_p, stack->mutex); /* Se bloquea si no puede añadir más items */
-    insert_item(stack, item);                                                       /* Poner item en el stack */
+    insert_item(stack, item);                                                       	/* Poner item en el stack */
     update_representation(stack, representation);                                       /* Actualizar la representación del buffer */
     local_count = stack->count;                                                         /* Guardar localmente el contador */
-    pthread_cond_signal(stack->cond_c);                                             /* Despertar algún consumidor */
-    pthread_mutex_unlock(stack->mutex);                                                  /* Sale de la región crítica */
+    pthread_cond_signal(stack->cond_c);                                             	/* Despertar algún consumidor */
+    pthread_mutex_unlock(stack->mutex);                                                 /* Sale de la región crítica */
 
     /* Como ya aumentamos el contador, no tenemos que sumarle 1 para pasarlo a indexado en 1 */
     producer_printf("Añadido el item   "bold("%2d")" a la posición  "bold("%2d")". Buffer: %s\n", item, local_count, representation);
@@ -94,11 +94,11 @@ void consume(Stack* stack){
         }
         pthread_cond_wait(stack->cond_c, stack->mutex);     /* Si los productores aún no terminaron, esperar */
     }
-    item = remove_item(stack);                      /* Eliminar elemento de la cola */
-    update_representation(stack, representation);   /* Actualizar la representación del buffer */
-    local_count = stack->count;                     /* Guardar localmente el contador */
-    pthread_cond_signal(stack->cond_p);         /* Despertar productores */
-    pthread_mutex_unlock(stack->mutex);             /* Salir de la región crítica */
+    item = remove_item(stack);                      		/* Eliminar elemento de la cola */
+    update_representation(stack, representation);   		/* Actualizar la representación del buffer */
+    local_count = stack->count;                     		/* Guardar localmente el contador */
+    pthread_cond_signal(stack->cond_p);         		/* Despertar productores */
+    pthread_mutex_unlock(stack->mutex);             		/* Salir de la región crítica */
     consume_item(stack, item, local_count + 1, representation); /* Imprimir elemento */
     free(representation);
 }

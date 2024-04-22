@@ -2,7 +2,7 @@
  * Sistemas Operativos 2. Práctica 2.
  * Librería con las implementaciones de las funciones genéricas de
  * productor y consumidor usando un stack compartido controlado
- * por semáforos.
+ * por mutexes sin variables de condición.
  *
  * @date 16/04/2024
  * @authors Arcos Salgado, Guillermo

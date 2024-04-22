@@ -2,6 +2,7 @@
  * Sistemas Operativos 2. Práctica 2.
  * Librería con las cabeceras de las funciones genéricas de
  * para crear, representar y destruir un stack compartido controlado
+ * por mutexes sin variables de condición
  *
  * @date 09/04/2024
  * @authors Arcos Salgado, Guillermo

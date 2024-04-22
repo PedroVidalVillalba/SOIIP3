@@ -2,6 +2,7 @@
  * Sistemas Operativos 2. Práctica 2.
  * Librería con las implementaciones de las funciones genéricas de
  * para crear, representar y destruir un stack compartido controlado
+ * por mutexes y variables de condición
  *
  * @date 16/04/2024
  * @authors Arcos Salgado, Guillermo
@@ -19,8 +20,8 @@ void create_stack(Stack* stack, int size) {
     /* Alojar memoria para el buffer (al usar hilos es la misma para todos) */
     stack->buffer = (int *) calloc(size, sizeof(int));
     stack->size = size;
-    stack->count = 0;   /* El buffer se inicia vacío */
-    stack->production_finished = 0; /* La producción empieza sin terminar */
+    stack->count = 0;   		/* El buffer se inicia vacío */
+    stack->production_finished = 0; 	/* La producción empieza sin terminar */
 
     /* Alojar memoria para el mutex y las variables de condición */
     stack->mutex = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
@@ -36,7 +37,7 @@ void create_stack(Stack* stack, int size) {
 
 void delete_stack(Stack* stack) {
     /* Liberar el buffer en memoria compartida */
-	free(stack->buffer);
+    free(stack->buffer);
     stack->buffer = NULL;
     stack->size = -1;   /* Marcar con valores de error */
     stack->count = -1;

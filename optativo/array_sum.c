@@ -41,7 +41,7 @@ void create_array(Array* array, int* values, int size, int start, int step) {
     }
     array->size = size;
     array->sum = 0; /* La suma de los elementos empieza en 0 */
-    array->count = start;   /* Empezar en la posición indicada */
+    array->count = start;/* Empezar en la posición indicada */
     array->step = step;
 
     /* Reservamos memoria para el mutex */

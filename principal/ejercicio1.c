@@ -126,8 +126,8 @@ int main(int argc, char** argv) {
     for (i = 0; i < P; i++) {
         pthread_join(producers[i], NULL);
     }
-    stack.production_finished = 1;
-    pthread_cond_broadcast(stack.cond_c);   /* todo: revisar esto */
+    stack.production_finished = 1;	/* Indicar que los productores han acabado */
+    pthread_cond_broadcast(stack.cond_c);	/* Despertar a los consumidores */
     for (i = 0; i < C; i++) {
         pthread_join(consumers[i], NULL);
     }
@@ -151,11 +151,11 @@ void* producer(void* args) {
     i = 0;
     done = 0;
     while (i < NUM_ITEMS || !done) {
-        if (i < NUM_ITEMS) {
+        if (i < NUM_ITEMS) { /* Comprobar si se han producido todos los items */ 
             produce(stack);
             i++;
         }
-        if (!done) {
+        if (!done) { /* Comprobar si ya se ha completado la contribución a la suma */
             done = contribute_sum(array);
             if (done) {
                 producer_printf("Suma de los elementos pares del array finalizada.   Total = %d\n", array->sum); 
@@ -177,7 +177,7 @@ void* consumer(void* args) {
         if (!(stack->production_finished) || stack->count) {    /* Hay que consumir hasta que los productores hayan acabado y el stack esté vacío */
             consume(stack);
         }
-        if (!done) {
+        if (!done) { /* Comprobar si ya se ha completado la contribución a la suma */
             done = contribute_sum(array);
             if (done) {
                 consumer_printf("Suma de los elementos impares del array finalizada. Total = %d\n", array->sum);

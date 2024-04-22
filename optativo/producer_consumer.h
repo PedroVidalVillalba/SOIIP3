@@ -2,10 +2,10 @@
  * Sistemas Operativos 2. Práctica 2.
  * Librería con las cabeceras de las funciones genéricas de
  * productor y consumidor usando un stack compartido controlado
- * por semáforos.
+ * por mutexes sin variables de condición.
  *
  * @date 07/04/2024
- * @authors Falgueras Casarejos, Yago
+ * @authors Arcos Salgado, Guillermo
  * @authors Vidal Villalba, Pedro
  */
 
